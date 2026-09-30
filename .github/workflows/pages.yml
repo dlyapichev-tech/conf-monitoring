@@ -26,13 +26,66 @@ jobs:
 
       - name: Prepare site
         run: |
-          rm -rf _site
-          mkdir _site
+          rm -rf _site _unpack
+          mkdir _site _unpack
+
           if [ ! -f conf_site_prod.zip ]; then
             echo "conf_site_prod.zip is missing from repository root"
             exit 1
           fi
-          unzip -q conf_site_prod.zip -d _site
+
+          unzip -q conf_site_prod.zip -d _unpack
+
+          INDEX_PATH="$(find _unpack -name index.html -type f -print -quit)"
+          if [ -z "$INDEX_PATH" ]; then
+            echo "index.html not found in archive"
+            exit 1
+          fi
+
+          SITE_ROOT="$(dirname "$INDEX_PATH")"
+          cp -a "$SITE_ROOT"/. _site/
+
+          cat >> _site/styles.css <<'CSS'
+
+          /* Header organizer logos: show complete images, never crop */
+          .brand-lockup{
+            display:flex !important;
+            align-items:center !important;
+            gap:12px !important;
+            flex:0 0 auto !important;
+            overflow:visible !important;
+          }
+          .logo-box{
+            height:52px !important;
+            display:flex !important;
+            align-items:center !important;
+            justify-content:center !important;
+            overflow:visible !important;
+            flex:0 0 auto !important;
+          }
+          .logo-box.gubkin{width:158px !important;}
+          .logo-box.gee{width:125px !important;}
+          .logo-box.gubkin img,
+          .logo-box.gee img{
+            display:block !important;
+            width:100% !important;
+            height:auto !important;
+            max-width:100% !important;
+            max-height:52px !important;
+            object-fit:contain !important;
+            object-position:center !important;
+            transform:none !important;
+            clip-path:none !important;
+            margin:0 !important;
+          }
+          @media(max-width:740px){
+            .logo-box{height:42px !important;}
+            .logo-box.gubkin{width:126px !important;}
+            .logo-box.gee{width:100px !important;}
+            .logo-box.gubkin img,
+            .logo-box.gee img{max-height:42px !important;}
+          }
+          CSS
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
